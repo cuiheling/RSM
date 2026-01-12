@@ -1,0 +1,14 @@
+[
+{
+  "directory": "D:/LearnOpenGL/projects/RSM/build",
+  "command": "C:\\PROGRA~2\\MICROS~3\\18\\BUILDT~1\\VC\\Tools\\MSVC\\1450~1.357\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -ID:\\LearnOpenGL\\projects\\RSM\\..\\..\\Source\\Include /DWIN32 /D_WINDOWS /GR /EHsc /Zi /Ob0 /Od /RTC1 -std:c++17 -MDd /FoCMakeFiles\\OpenGLDemo.dir\\src\\main.cpp.obj /FdCMakeFiles\\OpenGLDemo.dir\\ /FS -c D:\\LearnOpenGL\\projects\\RSM\\src\\main.cpp",
+  "file": "D:/LearnOpenGL/projects/RSM/src/main.cpp",
+  "output": "D:/LearnOpenGL/projects/RSM/build/CMakeFiles/OpenGLDemo.dir/src/main.cpp.obj"
+},
+{
+  "directory": "D:/LearnOpenGL/projects/RSM/build",
+  "command": "C:\\PROGRA~2\\MICROS~3\\18\\BUILDT~1\\VC\\Tools\\MSVC\\1450~1.357\\bin\\Hostx64\\x64\\cl.exe  /nologo -ID:\\LearnOpenGL\\projects\\RSM\\..\\..\\Source\\Include /DWIN32 /D_WINDOWS /Zi /Ob0 /Od /RTC1 -MDd /FoCMakeFiles\\OpenGLDemo.dir\\D_\\LearnOpenGL\\glad\\src\\glad.c.obj /FdCMakeFiles\\OpenGLDemo.dir\\ /FS -c D:\\LearnOpenGL\\glad\\src\\glad.c",
+  "file": "D:/LearnOpenGL/glad/src/glad.c",
+  "output": "D:/LearnOpenGL/projects/RSM/build/CMakeFiles/OpenGLDemo.dir/D_/LearnOpenGL/glad/src/glad.c.obj"
+}
+]
