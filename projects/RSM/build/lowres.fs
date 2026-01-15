@@ -46,4 +46,11 @@ void main(){
         float tmp = max(0, dot(pNormal, FragPos - pFragPos)) * max(0, dot(Normal, pFragPos - FragPos));
         irradiance += weight * pFlux * tmp / pow(length(FragPos - pFragPos), 4.0);
     }
+    if (total_weight < 0.001){
+        FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    }
+    else{
+        irradiance /= total_weight;
+        FragColor = vec4(irradiance * (512 * 512), 1.0);
+    }
 }
