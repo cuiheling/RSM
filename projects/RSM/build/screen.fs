@@ -145,27 +145,27 @@ void main(){
             //indirect = vec3(1.0) - direct;
         }
         else{
-            indirect = vv * F00 + (1 - vv) * F01;
+            indirect = vv * F01 + (1 - vv) * F00;
         }
     }
     else if (vv < 0.00001) {
-        if (similar(TexCoords.xy, lowres00) == 0 || similar(TexCoords.xy, lowres01) == 0){
+        if (similar(TexCoords.xy, lowres00) == 0 || similar(TexCoords.xy, lowres10) == 0){
             indirect = sampleRSM();
             //indirect = vec3(1.0) - direct;
         }
         else{
-            indirect = uu * F00 + (1 - uu) * F10;
+            indirect = uu * F10 + (1 - uu) * F00;
         }
     }
     else {
         int count = similar(TexCoords.xy, lowres00) + similar(TexCoords.xy, lowres01);
-        count += similar(TexCoords.xy, lowres00) + similar(TexCoords.xy, lowres01);
+        count += similar(TexCoords.xy, lowres10) + similar(TexCoords.xy, lowres11);
         if (count < 3){
             indirect = sampleRSM();
             //indirect = vec3(1.0) - direct;
         }
         else{
-            indirect = uu * vv * F00 + (1-uu) * vv * F10 + uu * (1-vv) * F01 + (1-uu) * (1-vv) * F11;
+            indirect = uu * vv * F11 + (1-uu) * vv * F01 + uu * (1-vv) * F10 + (1-uu) * (1-vv) * F00;
         }
     }
     //vec3 fragColor = pow(lighting, vec3(1.0/2.2));
