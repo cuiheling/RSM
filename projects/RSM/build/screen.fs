@@ -57,9 +57,6 @@ vec3 sampleRSM(){
     vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
     
-    if (projCoords.x < 0 || projCoords.x > 1 || projCoords.y < 0 || projCoords.y > 1){
-        return vec3(0.0);
-    }
     vec3 irradiance = vec3(0.0);
     float total_weight = 0.0;
     for (int i = 0; i < 400; i++){
