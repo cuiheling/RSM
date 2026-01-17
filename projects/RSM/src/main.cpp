@@ -348,8 +348,8 @@ int main() {
 
     glm::vec3 lightPos(-2.0f, 4.0f, -1.0f), lightCol(1.0f, 1.0f, 1.0f);
     glm::mat4 lview = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 1.0f, 7.5f);
-    //glm::mat4 lprojection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.50f);
+    glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 20.0f);
+    //glm::mat4 lprojection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
     depthShader.use();
     depthShader.setMatrix4("lightView", lview);
     depthShader.setMatrix4("lightProj", lprojection);
@@ -380,9 +380,6 @@ int main() {
     screenShader.setMatrix4("lightProj", lprojection);
     lowresShader.use();
     lowresShader.setFloat("shininess", 32.0f);
-    lowresShader.setVector3("light.ambient", 0.2f, 0.2f, 0.2f);
-    lowresShader.setVector3("light.diffuse", 0.5f, 0.5f, 0.5f);
-    lowresShader.setVector3("light.specular", 1.0f, 1.0f, 1.0f);
     lowresShader.setInt("cbuffer.cPosition", 0);
     lowresShader.setInt("cbuffer.cNormal", 1);
     lowresShader.setInt("lbuffer.lPosition", 2);
@@ -392,8 +389,8 @@ int main() {
     lowresShader.setMatrix4("lightProj", lprojection);
     debugShader.use();
     debugShader.setInt("depthMap", 0);
-    debugShader.setFloat("near_plane", 1.0f);
-    debugShader.setFloat("far_plane", 7.50f);
+    debugShader.setFloat("near_plane", 0.1f);
+    debugShader.setFloat("far_plane", 20.0f);
 
     unsigned int diffuseTex = LoadTexture("metal.png");
     unsigned int specularTex = LoadTexture("newspec.png");

@@ -42,7 +42,7 @@ int similar(vec2 xCoords, vec2 xpCoords){
     vec3 Normal = texture(cbuffer.cNormal, xCoords).rgb;
     vec3 pFragPos = texture(cbuffer.cPosition, xpCoords).rgb;
     vec3 pNormal = texture(cbuffer.cNormal, xpCoords).rgb;
-    if (length(Normal - pNormal) > 0.02 && abs(dot(Normal, pNormal)) < 0.3){
+    if (length(Normal - pNormal) > 0.02 || abs(dot(Normal, pNormal)) < 0.3){
         return 0;
     }
     else{

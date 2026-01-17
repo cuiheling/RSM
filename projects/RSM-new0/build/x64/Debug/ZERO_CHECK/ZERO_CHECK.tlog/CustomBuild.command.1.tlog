@@ -1,0 +1,10 @@
+^D:\LEARNOPENGL\PROJECTS\RSM-NEW\BUILD\CMAKEFILES\63E2A55C54C8CBE980C00E2726201884\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/LearnOpenGL/projects/RSM-new -BD:/LearnOpenGL/projects/RSM-new/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/LearnOpenGL/projects/RSM-new/build/OpenGLDemo.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

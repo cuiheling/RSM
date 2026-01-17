@@ -200,7 +200,7 @@ int main() {
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     const float pai = 3.1415926;
     //float sampleX[405], sampleY[405], sampleWt[405];
-    float samples[1605];
+    /*float samples[1605];
     for (int i = 0; i < 400; i++){
         float s1 = dist(gen), s2 = dist(gen), s3 = dist(gen);
         float th1 = 2 * pai * s2, th2 =  acos(1.0f - 2.0f * s3);
@@ -208,6 +208,13 @@ int main() {
         samples[i * 4 + 1] = 0.3 * s1 * sin(th2) * sin(th1);
         samples[i * 4 + 2] = 0.3 * s1 * sin(th2) * cos(th1);
         samples[i * 4 + 3] = s1 * s1;
+    }*/
+    float samples[1205];
+    for (int i = 0; i < 400; i++){
+        float s1 = dist(gen), s2 = dist(gen);
+        samples[i * 3] = 0.3 * s1 * sin(s2 * 2 * pai);
+        samples[i * 3 + 1] = 0.3 * s1 * cos(s2 * 2 * pai);
+        samples[i * 3 + 2] = s1 * s1;
     }
 
     unsigned int lBuffer;
@@ -373,7 +380,7 @@ int main() {
     GLuint sampleSSBO;
     glGenBuffers(1, &sampleSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sampleSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * 400, samples, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * 400, samples, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
 
     Shader depthShader("depth.vs", "depth.gs", "depth.fs");

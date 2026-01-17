@@ -12,7 +12,7 @@ struct Lbuffer {
 };
 
 layout(std430, binding = 0) buffer SampleBuffer {
-    vec4 samples[];
+    vec3 samples[];
 };
 
 uniform Cbuffer cbuffer;
@@ -27,12 +27,16 @@ void main(){
     vec3 Normal = texture(cbuffer.cNormal, TexCoords).rgb;
     vec3 fragToLight = FragPos - lightPos;
     float dist = length(fragToLight);
+    vec3 d = normalize(fragToLight);
+    vec3 up = abs(d.z) < 0.999 ? vec3(0,0,1) : vec3(0,1,0);
+    vec3 t = normalize(cross(up, d));
+    vec3 b = cross(d, t);
     vec3 irradiance = vec3(0.0);
     float total_weight = 0.0;
     for (int i = 0; i < 400; i++){
-        vec4 xyzw = samples[i];
-        vec3 sampleCoords = xyzw.xyz * dist + fragToLight;
-        float weight = xyzw.w;
+        vec3 xywt = samples[i];
+        vec3 sampleCoords = xywt.x * t + xywt.y * b + d;
+        float weight = xywt.z;
         total_weight += weight;
         vec3 pFragPos = texture(lbuffer.lPosition, sampleCoords).rgb;
         vec3 pNormal = texture(lbuffer.lNormal, sampleCoords).rgb;
@@ -45,7 +49,7 @@ void main(){
     }
     else{
         irradiance /= total_weight;
-        FragColor = vec4(irradiance * (512 * 512), 1.0);
+        FragColor = vec4(irradiance * (512 * 512 * 6), 1.0);
     }
     //FragColor = vec4(texture(lbuffer.lNormal, fragToLight).rgb, 1.0);
 }
