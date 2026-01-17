@@ -212,8 +212,8 @@ int main() {
     float samples[1205];
     for (int i = 0; i < 400; i++){
         float s1 = dist(gen), s2 = dist(gen);
-        samples[i * 3] = 0.3 * s1 * sin(s2 * 2 * pai);
-        samples[i * 3 + 1] = 0.3 * s1 * cos(s2 * 2 * pai);
+        samples[i * 3] = s1 * sin(s2 * 2 * pai);
+        samples[i * 3 + 1] = s1 * cos(s2 * 2 * pai);
         samples[i * 3 + 2] = s1 * s1;
     }
 

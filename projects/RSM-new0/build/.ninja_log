@@ -1,6 +1,6 @@
 # ninja log v6
 25	205	7902691142296932	CMakeFiles/OpenGLDemo.dir/D_/LearnOpenGL/glad/src/glad.c.obj	75dd300e0d4e5c
-8	610	7902691142126898	CMakeFiles/OpenGLDemo.dir/src/main.cpp.obj	bb9ce9cbf0dea894
-610	930	7902691148149405	OpenGLDemo.exe	bb902dab942b9e77
 6	1070	7902711387028700	CMakeFiles/OpenGLDemo.dir/src/main.cpp.obj	bb9ce9cbf0dea894
 1070	1654	7902711397673362	OpenGLDemo.exe	bb902dab942b9e77
+5	1511	7903469871377820	CMakeFiles/OpenGLDemo.dir/src/main.cpp.obj	bb9ce9cbf0dea894
+1511	2051	7903469886436293	OpenGLDemo.exe	bb902dab942b9e77

@@ -204,9 +204,9 @@ int main() {
     for (int i = 0; i < 400; i++){
         float s1 = dist(gen), s2 = dist(gen), s3 = dist(gen);
         float th1 = 2 * pai * s2, th2 =  acos(1.0f - 2.0f * s3);
-        samples[i * 4] = 0.3 * s1 * cos(th2);
-        samples[i * 4 + 1] = 0.3 * s1 * sin(th2) * sin(th1);
-        samples[i * 4 + 2] = 0.3 * s1 * sin(th2) * cos(th1);
+        samples[i * 4] = s1 * cos(th2);
+        samples[i * 4 + 1] = s1 * sin(th2) * sin(th1);
+        samples[i * 4 + 2] = s1 * sin(th2) * cos(th1);
         samples[i * 4 + 3] = s1 * s1;
     }
     /*float samples[1205];
