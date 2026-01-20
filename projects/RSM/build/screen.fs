@@ -21,12 +21,12 @@ struct Light{
 };
 
 uniform sampler2D lowresMap;
-uniform sampler2D shadowMap;
 uniform Light light;
 uniform Cbuffer cbuffer;
 uniform Lbuffer lbuffer;
 uniform vec3 viewPos;
 uniform float shininess;
+uniform sampler2D shadowMap;
 uniform mat4 lightProj;
 uniform mat4 lightView;
 
@@ -50,6 +50,10 @@ int similar(vec2 xCoords, vec2 xpCoords){
     }
 }
 
+float attenuate(float d){
+    return 1.0 / (1.0 + 0.09 * d + 0.032 * d * d);
+}
+
 vec3 sampleRSM(){
     vec3 FragPos = texture(cbuffer.cPosition, TexCoords).rgb;
     vec3 Normal = texture(cbuffer.cNormal, TexCoords).rgb;
@@ -71,7 +75,8 @@ vec3 sampleRSM(){
         vec3 pNormal = texture(lbuffer.lNormal, sampleCoords).rgb;
         vec3 pFlux = texture(lbuffer.lFlux, sampleCoords).rgb;
         float tmp = max(0, dot(pNormal, FragPos - pFragPos)) * max(0, dot(Normal, pFragPos - FragPos));
-        irradiance += weight * pFlux * tmp / pow(length(FragPos - pFragPos), 4.0);
+        float dist = length(FragPos - pFragPos);
+        irradiance += weight * pFlux * tmp * attenuate(dist) / (dist * dist);
     }
     if (total_weight < 0.001){
         return vec3(0.0);
@@ -117,7 +122,13 @@ void main(){
     shadow /= 9.0;
     if(projCoords.z > 1.0)
         shadow = 0.0;
-    vec3 direct = ambient + (diffuse + specular) * (1.0 - shadow);
+
+    float theta = dot(lightDir, normalize(light.position - vec3(0.0)));
+    float cutoff = sqrt(2.0) / 2.0;
+    float inside = (theta > cutoff) ? 1.0 : 0.0;
+
+    float dist = length(light.position - FragPos);
+    vec3 direct = (ambient + (diffuse + specular) * (1.0 - shadow) * inside) * attenuate(dist);
 
     vec3 indirect;
     vec2 lowresTSize = 1.0 / textureSize(lowresMap, 0);

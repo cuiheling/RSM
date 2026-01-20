@@ -346,9 +346,9 @@ int main() {
     Shader lowresShader("lowres.vs", "lowres.fs");
     Shader lampShader("lamp.vs", "lamp.fs");
 
-    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f), lightCol(1.0f, 1.0f, 1.0f);
+    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f), lightCol(2.0f, 2.0f, 2.0f);
     glm::mat4 lview = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 20.0f);
+    glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.2f, 20.0f);
     //glm::mat4 lprojection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 20.0f);
     depthShader.use();
     depthShader.setMatrix4("lightView", lview);
@@ -357,6 +357,7 @@ int main() {
     depthShader.setFloat("fovX", 90.0f);
     depthShader.setFloat("fovY", 90.0f);
     depthShader.setVector3("lightCol", lightCol);
+    depthShader.setVector3("lightPos", lightPos);
     depthShader.setInt("albedoMap", 0);
     bufferShader.use();
     bufferShader.setInt("material.texture_diffuse1", 0);

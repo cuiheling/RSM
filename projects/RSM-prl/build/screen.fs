@@ -71,7 +71,7 @@ vec3 sampleRSM(){
         vec3 pNormal = texture(lbuffer.lNormal, sampleCoords).rgb;
         vec3 pFlux = texture(lbuffer.lFlux, sampleCoords).rgb;
         float tmp = max(0, dot(pNormal, FragPos - pFragPos)) * max(0, dot(Normal, pFragPos - FragPos));
-        irradiance += weight * pFlux * tmp / pow(length(FragPos - pFragPos), 4.0);
+        irradiance += weight * pFlux * tmp / pow(length(FragPos - pFragPos), 2.0);
     }
     if (total_weight < 0.001){
         return vec3(0.0);
@@ -117,7 +117,11 @@ void main(){
     shadow /= 9.0;
     if(projCoords.z > 1.0)
         shadow = 0.0;
-    vec3 direct = ambient + (diffuse + specular) * (1.0 - shadow);
+    
+    vec4 fpls = lightView * vec4(FragPos, 1.0);
+    vec3 pL = fpls.xyz / fpls.w;
+    float inside = (abs(fpls.x) <= 4.0 && abs(fpls.y) <= 4.0) ? 1.0 : 0.0;
+    vec3 direct = ambient + (diffuse + specular) * (1.0 - shadow) * inside;
 
     vec3 indirect;
     vec2 lowresTSize = 1.0 / textureSize(lowresMap, 0);

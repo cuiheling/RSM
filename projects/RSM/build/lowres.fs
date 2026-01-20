@@ -23,6 +23,10 @@ uniform mat4 lightView;
 out vec4 FragColor;
 in vec2 TexCoords;
 
+float attenuate(float d){
+    return 1.0 / (1.0 + 0.09 * d + 0.032 * d * d);
+}
+
 void main(){
     vec3 FragPos = texture(cbuffer.cPosition, TexCoords).rgb;
     vec3 Normal = texture(cbuffer.cNormal, TexCoords).rgb;
@@ -44,7 +48,8 @@ void main(){
         vec3 pNormal = texture(lbuffer.lNormal, sampleCoords).rgb;
         vec3 pFlux = texture(lbuffer.lFlux, sampleCoords).rgb;
         float tmp = max(0, dot(pNormal, FragPos - pFragPos)) * max(0, dot(Normal, pFragPos - FragPos));
-        irradiance += weight * pFlux * tmp / pow(length(FragPos - pFragPos), 4.0);
+        float dist = length(FragPos - pFragPos);
+        irradiance += weight * pFlux * tmp * attenuate(dist) / (dist * dist);
     }
     if (total_weight < 0.001){
         FragColor = vec4(0.0, 0.0, 0.0, 1.0);

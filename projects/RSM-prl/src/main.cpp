@@ -349,11 +349,12 @@ int main() {
     glm::vec3 lightPos(-2.0f, 4.0f, -1.0f), lightCol(1.0f, 1.0f, 1.0f);
     glm::mat4 lview = glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     //glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 20.0f);
-    glm::mat4 lprojection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 20.0f);
+    glm::mat4 lprojection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.2f, 20.0f);
     depthShader.use();
     depthShader.setMatrix4("lightView", lview);
     depthShader.setMatrix4("lightProj", lprojection);
     depthShader.setVector3("lightCol", lightCol);
+    depthShader.setVector3("lightPos", lightPos);
     depthShader.setVector2("rsmResolution", glm::vec2(512.0f, 512.0f));
     depthShader.setFloat("lightOrthoWidth", 8.0f);
     depthShader.setFloat("lightOrthoHeight", 8.0f);
@@ -396,7 +397,7 @@ int main() {
     unsigned int specularTex = LoadTexture("newspec.png");
 
     glViewport(0, 0, 512, 512);
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);

@@ -44,7 +44,7 @@ void main(){
         vec3 pNormal = texture(lbuffer.lNormal, sampleCoords).rgb;
         vec3 pFlux = texture(lbuffer.lFlux, sampleCoords).rgb;
         float tmp = max(0, dot(pNormal, FragPos - pFragPos)) * max(0, dot(Normal, pFragPos - FragPos));
-        irradiance += weight * pFlux * tmp / pow(length(FragPos - pFragPos), 4.0);
+        irradiance += weight * pFlux * tmp / pow(length(FragPos - pFragPos), 2.0);
     }
     if (total_weight < 0.001){
         FragColor = vec4(0.0, 0.0, 0.0, 1.0);

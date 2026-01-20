@@ -12,13 +12,18 @@ uniform vec3 lightCol;
 uniform vec3 lightPos;
 uniform vec2 rsmResolution;
 uniform float far_plane;
-uniform float fovX;
-uniform float fovY;
+
+float attenuate(float d){
+    return 1.0 / (1.0 + 0.09 * d + 0.032 * d * d);
+}
 
 void main() {
+    float lightDistance = length(lightPos - FragPos.xyz);
+
     lNormal = normalize(Normal);
-    lPosition = vec3(FragPos) - lNormal * 0.02;
+    lPosition = FragPos.xyz - lNormal * 0.02;
     vec2 uv = (gl_FragCoord.xy + 0.5) / rsmResolution;
+    lFlux = vec3(uv, 0.0);
     float x = uv.x * 2.0 - 1.0;
     float y = uv.y * 2.0 - 1.0;
     float dx = 2.0 / rsmResolution.x;
@@ -31,7 +36,11 @@ void main() {
     else{
         albedo = abs(lNormal);
     }
-    lFlux = lightCol * deltaOmega * albedo;
-    float lightDistance = length(FragPos.xyz - lightPos);
+    vec3 lightDir = normalize(lightPos - FragPos.xyz);
+    vec3 intensity = lightCol / (4.0 * 3.14159);
+    vec3 inFlux = intensity * deltaOmega * attenuate(lightDistance);
+    lFlux = inFlux * albedo * max(dot(lightDir, lNormal), 0.0);
+    //lFlux = lightCol / (4.0 * 3.14159) * deltaOmega * albedo;
+    //lFlux = vec3(deltaOmega * 512.0 * 512.0 / 4.0);
     gl_FragDepth = lightDistance / far_plane;
 }

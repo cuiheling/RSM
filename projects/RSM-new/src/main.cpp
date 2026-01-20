@@ -199,19 +199,11 @@ int main() {
     std::mt19937 gen(12345);
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     const float pai = 3.1415926;
-    //float sampleX[405], sampleY[405], sampleWt[405];
-    /*float samples[1605];
-    for (int i = 0; i < 400; i++){
-        float s1 = dist(gen), s2 = dist(gen), s3 = dist(gen);
-        float th1 = 2 * pai * s2, th2 =  acos(1.0f - 2.0f * s3);
-        samples[i * 4] = 0.3 * s1 * cos(th2);
-        samples[i * 4 + 1] = 0.3 * s1 * sin(th2) * sin(th1);
-        samples[i * 4 + 2] = 0.3 * s1 * sin(th2) * cos(th1);
-        samples[i * 4 + 3] = s1 * s1;
-    }*/
     float samples[1205];
     for (int i = 0; i < 400; i++){
         float s1 = dist(gen), s2 = dist(gen);
+        //float s1 = (float)(i / 20 + 1) / 20.0;
+        //float s2 = (float)(i % 20 + 1) / 20.0;
         samples[i * 3] = s1 * sin(s2 * 2 * pai);
         samples[i * 3 + 1] = s1 * cos(s2 * 2 * pai);
         samples[i * 3 + 2] = s1 * s1;
@@ -390,8 +382,8 @@ int main() {
     Shader lowresShader("lowres.vs", "lowres.fs");
     Shader lampShader("lamp.vs", "lamp.fs");
 
-    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f), lightCol(1.0f, 1.0f, 1.0f);
-    glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 20.0f);
+    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f), lightCol(2.0f, 2.0f, 2.0f);
+    glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.2f, 20.0f);
     //glm::mat4 lprojection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.50f);
     std::vector<glm::mat4> lviews;
     lviews.push_back(glm::lookAt(lightPos, lightPos + glm::vec3(1.0,0.0,0.0), glm::vec3(0.0,-1.0,0.0)));
@@ -409,8 +401,6 @@ int main() {
     }
     depthShader.setMatrix4("lightProj", lprojection);
     depthShader.setVector2("rsmResolution", glm::vec2(512.0f, 512.0f));
-    depthShader.setFloat("fovX", 90.0f);
-    depthShader.setFloat("fovY", 90.0f);
     depthShader.setFloat("far_plane", 20.0f);
     depthShader.setVector3("lightCol", lightCol);
     depthShader.setVector3("lightPos", lightPos);
@@ -444,12 +434,13 @@ int main() {
     debugShader.use();
     debugShader.setInt("depthMap", 0);
     debugShader.setInt("normMap", 1);
+    debugShader.setInt("fluxMap", 2);
 
     unsigned int diffuseTex = LoadTexture("metal.png");
     unsigned int specularTex = LoadTexture("newspec.png");
 
     glViewport(0, 0, 512, 512);
-    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
@@ -478,7 +469,6 @@ int main() {
         depthShader.setInt("Reverse", 0);
         depthShader.setInt("useTex", 1);
         drawGuitar(depthShader, SGB);
-        depthShader.use();
         depthShader.setInt("Reverse", 1);
         depthShader.setInt("useTex", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -523,6 +513,8 @@ int main() {
         glBindTexture(GL_TEXTURE_CUBE_MAP, lDepth);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, lNormal);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, lFlux);
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);*/
