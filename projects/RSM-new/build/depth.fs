@@ -6,6 +6,8 @@ layout (location = 2) out vec3 lFlux;
 in vec2 gCoords;
 in vec3 Normal;
 in vec4 FragPos;
+uniform int Mode1;
+uniform int Mode2;
 uniform int useTex;
 uniform sampler2D albedoMap;
 uniform vec3 lightCol;
@@ -38,9 +40,20 @@ void main() {
         albedo = abs(lNormal);
     }
     vec3 lightDir = normalize(lightPos - FragPos.xyz);
-    //vec3 intensity = lightCol / (4.0 * 3.14159);
-    vec3 inFlux = lightCol * deltaOmega * attenuate(lightDistance);
-    //lFlux = inFlux * lightDiff * albedo * max(dot(lightDir, lNormal), 0.0);
-    lFlux = lightCol * deltaOmega * lightDiff * albedo;
+    vec3 intensity;
+    if (Mode1 == 1){
+        intensity = lightCol / (4.0 * 3.14159);
+    }
+    else{
+        intensity = lightCol;
+    }
+    if (Mode2 == 1){
+        vec3 inFlux = intensity * deltaOmega * attenuate(lightDistance);
+        lFlux = inFlux * lightDiff * albedo * max(dot(lightDir, lNormal), 0.0);
+    }
+    else{
+        vec3 inFlux = intensity * deltaOmega;
+        lFlux = inFlux * lightDiff * albedo;
+    }
     gl_FragDepth = lightDistance / far_plane;
 }

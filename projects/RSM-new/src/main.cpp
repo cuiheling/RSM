@@ -15,6 +15,8 @@ using namespace std;
 
 Camera camera;
 double deltaTime = 0.0f, lastTime = 0.0f;
+float directFactor = 1.0, indirectFactor = 3.0;
+int Mode1 = 1, Mode2 = 0, Mode3 = 1;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -40,7 +42,41 @@ void processInput(GLFWwindow* window) {
         camera.KeyboardRotate(-4.0f, 0.0f);
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
         camera.KeyboardRotate(4.0f, 0.0f);
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        indirectFactor = max(indirectFactor - 0.1, 0.0);
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        indirectFactor = max(indirectFactor + 0.1, 10.0);
 }
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+        directFactor = 1.0 - directFactor;
+    if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+        Mode1 = 1 - Mode1;
+    if (key == GLFW_KEY_E && action == GLFW_PRESS)
+        Mode2 = 1 - Mode2;
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+        Mode3 = 1 - Mode3;
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS){
+        cout<<"direct="<<directFactor <<"  indirect="<<indirectFactor;
+        if (Mode1 == 1){
+            cout<<"  lightCol=Flux  ";
+        }
+        else{
+            cout<<"  lightCol=Intensity  ";
+        }
+        if (Mode2 == 1){
+            cout<<"  +attenuate +recieve_cosine";
+        }
+        if (Mode3 == 1){
+            cout<<" +count_Diffuse";
+        }
+        cout<<endl;
+    }
+}
+
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     camera.MouseRotate((float)xpos, (float)ypos);
@@ -410,7 +446,7 @@ int main() {
     depthShader.setFloat("far_plane", 20.0f);
     depthShader.setVector3("lightCol", lightCol);
     depthShader.setVector3("lightPos", lightPos);
-    depthShader.setVector3("lightDiff", 0.5f, 0.5f, 0.5f);
+    depthShader.setVector3("lightDiff", 1.0f, 1.0f, 1.0f);
     depthShader.setInt("albedoMap", 0);
     bufferShader.use();
     bufferShader.setInt("material.texture_diffuse1", 0);
@@ -448,8 +484,9 @@ int main() {
     unsigned int specularTex = LoadTexture("newspec.png");
 
     glViewport(0, 0, 512, 512);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glEnable(GL_DEPTH_TEST);
@@ -474,6 +511,8 @@ int main() {
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);
         depthShader.use();
+        depthShader.setInt("Mode1", Mode1);
+        depthShader.setInt("Mode2", Mode2);
         depthShader.setInt("Reverse", 0);
         depthShader.setInt("useTex", 1);
         drawGuitar(depthShader, SGB);
@@ -577,6 +616,9 @@ int main() {
         glActiveTexture(GL_TEXTURE8);
         glBindTexture(GL_TEXTURE_2D, cDepth);
         screenShader.setVector3("viewPos", camPos);
+        screenShader.setInt("Mode3", Mode3);
+        screenShader.setFloat("directFactor", directFactor);
+        screenShader.setFloat("indirectFactor", indirectFactor);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);

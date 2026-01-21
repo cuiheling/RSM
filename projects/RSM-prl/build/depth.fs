@@ -6,6 +6,8 @@ layout (location = 2) out vec3 lFlux;
 in vec2 TexCoords;
 in vec3 FragPos;
 in vec3 Normal;
+uniform int Mode1;
+uniform int Mode2;
 uniform int useTex;
 uniform sampler2D albedoMap;
 uniform vec3 lightCol;
@@ -18,6 +20,7 @@ uniform float lightOrthoWidth;
 void main() {
     lNormal = normalize(Normal);
     lPosition = FragPos - lNormal * 0.02;
+    float deltaA = lightOrthoWidth * lightOrthoHeight / (rsmResolution.x * rsmResolution.y);
     vec3 albedo;
     if (useTex == 1){
         albedo = texture(albedoMap, TexCoords).rgb;
@@ -25,10 +28,19 @@ void main() {
     else{
         albedo = abs(lNormal);
     }
-    vec3 lightDir = normalize(lightPos - FragPos);
-    //vec3 intensity = lightCol / (lightOrthoWidth * lightOrthoHeight);
-    float deltaA = lightOrthoWidth * lightOrthoHeight / (rsmResolution.x * rsmResolution.y);
-    vec3 inFlux = lightCol * deltaA;
-    //lFlux = inFlux * lightDiff * albedo * max(dot(lightDir, lNormal), 0.0);
-    lFlux = lightCol * deltaA * lightDiff * albedo;
+    vec3 intensity;
+    if (Mode1 == 1){
+        intensity = lightCol / (lightOrthoHeight * lightOrthoWidth);
+    }
+    else{
+        intensity = lightCol;
+    }
+    vec3 inFlux = intensity * deltaA;
+    if (Mode2 == 1){
+        vec3 lightDir = normalize(lightPos - FragPos);
+        lFlux = inFlux * lightDiff * albedo * max(dot(lightDir, lNormal), 0.0);
+    }
+    else{
+        lFlux = inFlux * lightDiff * albedo;
+    }
 }

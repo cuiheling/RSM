@@ -21,14 +21,17 @@ struct Light{
 };
 
 uniform sampler2D lowresMap;
+uniform samplerCube shadowMap;
+uniform sampler2D coverMap;
 uniform Light light;
 uniform Cbuffer cbuffer;
 uniform Lbuffer lbuffer;
 uniform vec3 viewPos;
 uniform float shininess;
 uniform float far_plane;
-uniform samplerCube shadowMap;
-uniform sampler2D coverMap;
+uniform int Mode3;
+uniform float directFactor;
+uniform float indirectFactor;
 uniform mat4 lightProj;
 uniform mat4 lightViews[6];
 
@@ -181,5 +184,12 @@ void main(){
             indirect = uu * vv * F11 + (1-uu) * vv * F01 + uu * (1-vv) * F10 + (1-uu) * (1-vv) * F00;
         }
     }
-    FragColor = vec4(directLight + indirect * Diffuse, 1.0);
+    vec3 indirectLight;
+    if (Mode3 == 1){
+        indirectLight = indirect * Diffuse;
+    }
+    else{
+        indirectLight = indirect;
+    }
+    FragColor = vec4(directLight * directFactor + indirectLight * indirectFactor, 1.0);
 }
