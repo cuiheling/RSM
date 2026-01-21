@@ -10,6 +10,7 @@ uniform int useTex;
 uniform sampler2D albedoMap;
 uniform vec3 lightCol;
 uniform vec3 lightPos;
+uniform vec3 lightDiff;
 uniform vec2 rsmResolution;
 uniform float far_plane;
 
@@ -37,10 +38,9 @@ void main() {
         albedo = abs(lNormal);
     }
     vec3 lightDir = normalize(lightPos - FragPos.xyz);
-    vec3 intensity = lightCol / (4.0 * 3.14159);
-    vec3 inFlux = intensity * deltaOmega * attenuate(lightDistance);
-    lFlux = inFlux * albedo * max(dot(lightDir, lNormal), 0.0);
-    //lFlux = lightCol / (4.0 * 3.14159) * deltaOmega * albedo;
-    //lFlux = vec3(deltaOmega * 512.0 * 512.0 / 4.0);
+    //vec3 intensity = lightCol / (4.0 * 3.14159);
+    vec3 inFlux = lightCol * deltaOmega * attenuate(lightDistance);
+    //lFlux = inFlux * lightDiff * albedo * max(dot(lightDir, lNormal), 0.0);
+    lFlux = lightCol * deltaOmega * lightDiff * albedo;
     gl_FragDepth = lightDistance / far_plane;
 }

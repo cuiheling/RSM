@@ -10,6 +10,7 @@ uniform int useTex;
 uniform sampler2D albedoMap;
 uniform vec3 lightCol;
 uniform vec3 lightPos;
+uniform vec3 lightDiff;
 uniform vec2 rsmResolution;
 uniform float lightOrthoHeight;
 uniform float lightOrthoWidth;
@@ -25,7 +26,9 @@ void main() {
         albedo = abs(lNormal);
     }
     vec3 lightDir = normalize(lightPos - FragPos);
-    vec3 inFlux = lightCol / (rsmResolution.x * rsmResolution.y) ;
-    lFlux = inFlux * albedo * max(dot(lightDir, lNormal), 0.0);
-    //lFlux = lightCol * albedox / (rsmResolution.x * rsmResolution.y);
+    //vec3 intensity = lightCol / (lightOrthoWidth * lightOrthoHeight);
+    float deltaA = lightOrthoWidth * lightOrthoHeight / (rsmResolution.x * rsmResolution.y);
+    vec3 inFlux = lightCol * deltaA;
+    //lFlux = inFlux * lightDiff * albedo * max(dot(lightDir, lNormal), 0.0);
+    lFlux = lightCol * deltaA * lightDiff * albedo;
 }

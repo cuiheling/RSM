@@ -244,6 +244,17 @@ int main() {
     unsigned int cBuffer;
     glGenFramebuffers(1, &cBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, cBuffer);
+
+    unsigned int cDepth;
+    glGenTextures(1, &cDepth);
+    glBindTexture(GL_TEXTURE_2D, cDepth);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 512, 512, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cDepth, 0);
     unsigned int cPosition;
     glGenTextures(1, &cPosition);
     glBindTexture(GL_TEXTURE_2D, cPosition);
@@ -268,12 +279,6 @@ int main() {
 
     GLuint Cattachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     glDrawBuffers(3, Cattachments);
-
-    unsigned int depthRBO;
-    glGenRenderbuffers(1, &depthRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 512, 512);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRBO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, cBuffer);
     GLenum Cstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -355,6 +360,7 @@ int main() {
     depthShader.setMatrix4("lightProj", lprojection);
     depthShader.setVector3("lightCol", lightCol);
     depthShader.setVector3("lightPos", lightPos);
+    depthShader.setVector3("lightDiff", 0.5, 0.5, 0.5);
     depthShader.setVector2("rsmResolution", glm::vec2(512.0f, 512.0f));
     depthShader.setFloat("lightOrthoWidth", 8.0f);
     depthShader.setFloat("lightOrthoHeight", 8.0f);
@@ -375,6 +381,7 @@ int main() {
     screenShader.setInt("lbuffer.lNormal", 5);
     screenShader.setInt("lbuffer.lFlux", 6);
     screenShader.setInt("lowresMap", 7);
+    screenShader.setInt("coverMap", 8);
     screenShader.setVector3("light.position", lightPos);
     screenShader.setVector3("light.color", lightCol);
     screenShader.setMatrix4("lightView", lview);
@@ -513,6 +520,8 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, lFlux);
         glActiveTexture(GL_TEXTURE7);
         glBindTexture(GL_TEXTURE_2D, lowresBuffer);
+        glActiveTexture(GL_TEXTURE8);
+        glBindTexture(GL_TEXTURE_2D, cDepth);
         screenShader.setVector3("viewPos", camPos);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
         glBindVertexArray(screenVAO);
