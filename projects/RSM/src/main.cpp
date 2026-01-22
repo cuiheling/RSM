@@ -7,6 +7,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #include <cmath>
 #include <random>
 #include <iostream>
@@ -15,8 +18,9 @@ using namespace std;
 
 Camera camera;
 double deltaTime = 0.0f, lastTime = 0.0f;
-float directFactor = 1.0, indirectFactor = 3.0;
-int Mode1 = 1, Mode2 = 0, Mode3 = 1; 
+float indirectFactor = 3.0;
+bool Mode1 = 1, Mode2 = 0, Mode3 = 1, directFactor = 1, ctrl = 1; 
+static GLFWcursorposfun imgui_cursor_callback = nullptr;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -42,16 +46,23 @@ void processInput(GLFWwindow* window) {
         camera.KeyboardRotate(-4.0f, 0.0f);
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
         camera.KeyboardRotate(4.0f, 0.0f);
-    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+    /*if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
         indirectFactor = max(indirectFactor - 0.1, 0.0);
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-        indirectFactor = max(indirectFactor + 0.1, 10.0);
+        indirectFactor = min(indirectFactor + 0.1, 10.0);*/
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        ctrl = !ctrl;
+        if (ctrl) {
+            //imgui open
+            camera.firstMouse = true;
+        }
+    }
+    /*if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
         directFactor = 1.0 - directFactor;
     if (key == GLFW_KEY_Q && action == GLFW_PRESS)
         Mode1 = 1 - Mode1;
@@ -74,11 +85,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
             cout<<" +count_Diffuse";
         }
         cout<<endl;
-    }
+    }*/
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    camera.MouseRotate((float)xpos, (float)ypos);
+    if (imgui_cursor_callback)
+        imgui_cursor_callback(window, xpos, ypos);
+    if (!ImGui::GetIO().WantCaptureMouse && !ctrl)
+        camera.MouseRotate((float)xpos, (float)ypos);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
@@ -173,6 +187,19 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    ImGui::StyleColorsDark();
+    bool backend_ok = ImGui_ImplGlfw_InitForOpenGL(window, true);
+    bool renderer_ok = ImGui_ImplOpenGL3_Init("#version 130");
+
+    if (!backend_ok || !renderer_ok) {
+        std::cerr << "Failed to initialize ImGui backends!" << std::endl;
+    }
+
     stbi_set_flip_vertically_on_load(true);
     Model SGB("backpack/backpack.obj");
 
@@ -442,15 +469,42 @@ int main() {
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    imgui_cursor_callback = glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
+        glfwPollEvents();
+
+        if (ctrl == 1) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
 
         double currentTime = (double)glfwGetTime();
         deltaTime = currentTime - lastTime;
         lastTime = currentTime;
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        static bool show_demo_window = true;
+        if (show_demo_window) {
+            ImGui::ShowDemoWindow(&show_demo_window);
+            ImGui::SetWindowPos(ImVec2(50, 50));
+        }
+
+        ImGui::Begin("Factors Controls");
+        ImGui::Checkbox("direct", &directFactor);
+        ImGui::SliderFloat("indirect", &indirectFactor, 0.0f, 10.0f);
+        ImGui::Checkbox("Color as Flux", &Mode1);
+        ImGui::Checkbox("attenuation & reciever cos", &Mode2);
+        ImGui::Checkbox("indirect diffuse", &Mode3);
+        ImGui::End();
+
+        ImGui::Render();
 
         glm::vec3 camPos = camera.cameraPos;
         glm::mat4 model = glm::mat4(1.0f);
@@ -562,7 +616,7 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, cDepth);
         screenShader.setVector3("viewPos", camPos);
         screenShader.setInt("Mode3", Mode3);
-        screenShader.setFloat("directFactor", directFactor);
+        screenShader.setFloat("directFactor", (float)directFactor);
         screenShader.setFloat("indirectFactor", indirectFactor);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
         glBindVertexArray(screenVAO);
@@ -588,9 +642,12 @@ int main() {
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     glfwTerminate();
     return 0;
 }
