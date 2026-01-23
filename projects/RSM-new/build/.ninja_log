@@ -1,14 +1,14 @@
 # ninja log v6
-33	257	7907320742956733	CMakeFiles/OpenGLDemo.dir/D_/LearnOpenGL/glad/src/glad.c.obj	bc5c6712f08f623e
-14	259	7907320742762480	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui_draw.cpp.obj	8afc6a77353eb65c
-8	618	7907321067122870	CMakeFiles/OpenGLDemo.dir/src/main.cpp.obj	58ff524730891167
-619	1334	7907321073233866	OpenGLDemo.exe	8aea42b553fa65ad
-19	191	7907320742806730	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui_tables.cpp.obj	2eca6505aa3f79ca
-11	214	7907320742732493	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui_demo.cpp.obj	e559e394769ebdc9
-27	212	7907320742886734	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/backends/imgui_impl_opengl3.cpp.obj	4fc2a5565df1965f
-16	262	7907320742786692	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui_widgets.cpp.obj	611ab077a2d2ca27
-22	334	7907320742846737	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/backends/imgui_impl_glfw.cpp.obj	c55aeecf38b42980
-8	415	7907320742702478	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui.cpp.obj	77d5e9d20b6ba797
-415	605	7907320746774178	imgui.lib	34d150f351e63b11
-7	893	7907329114182170	CMakeFiles/OpenGLDemo.dir/src/main.cpp.obj	58ff524730891167
-894	1188	7907329123053571	OpenGLDemo.exe	8aea42b553fa65ad
+45	277	7908379286825023	CMakeFiles/OpenGLDemo.dir/D_/LearnOpenGL/glad/src/glad.c.obj	bc5c6712f08f623e
+18	278	7908379286553807	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui_draw.cpp.obj	8afc6a77353eb65c
+42	724	7908379286785031	CMakeFiles/OpenGLDemo.dir/src/main.cpp.obj	58ff524730891167
+724	1337	7908379293619961	OpenGLDemo.exe	8aea42b553fa65ad
+28	245	7908379286655032	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui_tables.cpp.obj	2eca6505aa3f79ca
+11	250	7908379286479093	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui_demo.cpp.obj	e559e394769ebdc9
+39	240	7908379286765034	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/backends/imgui_impl_opengl3.cpp.obj	4fc2a5565df1965f
+23	312	7908379286603785	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui_widgets.cpp.obj	611ab077a2d2ca27
+34	368	7908379286715034	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/backends/imgui_impl_glfw.cpp.obj	c55aeecf38b42980
+5	431	7908379286419100	CMakeFiles/imgui.dir/D_/LearnOpenGL/Source/Include/imgui/imgui.cpp.obj	77d5e9d20b6ba797
+432	606	7908379290689920	imgui.lib	34d150f351e63b11
+7	1092	7908419454924139	CMakeFiles/OpenGLDemo.dir/src/main.cpp.obj	58ff524730891167
+1092	1453	7908419465771745	OpenGLDemo.exe	8aea42b553fa65ad

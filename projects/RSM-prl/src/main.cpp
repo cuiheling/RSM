@@ -19,7 +19,9 @@ using namespace std;
 Camera camera;
 double deltaTime = 0.0f, lastTime = 0.0f;
 float indirectFactor = 3.0;
-bool Mode1 = 1, Mode2 = 0, Mode3 = 1, directFactor = 1, ctrl = 1; 
+glm::vec3 lightCol(2.0f, 2.0f, 2.0f);
+bool Mode1 = 1, Mode2 = 1, Mode3 = 1, Mode4 = 1, directFactor = 1, ctrl = 1;
+int sampleNum = 400;
 static GLFWcursorposfun imgui_cursor_callback = nullptr;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -241,8 +243,8 @@ int main() {
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     const float pai = 3.1415926;
     //float sampleX[405], sampleY[405], sampleWt[405];
-    float samples[1205];
-    for (int i = 0; i < 400; i++){
+    float samples[3005];
+    for (int i = 0; i < 1000; i++){
         float s1 = dist(gen), s2 = dist(gen);
         samples[i * 3] = 0.3 * s1 * sin(s2 * 2 * pai);
         samples[i * 3 + 1] = 0.3 * s1 * cos(s2 * 2 * pai);
@@ -403,7 +405,7 @@ int main() {
     GLuint sampleSSBO;
     glGenBuffers(1, &sampleSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sampleSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * 400, samples, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * 1000, samples, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
 
     Shader depthShader("depth.vs", "depth.fs");
@@ -420,7 +422,6 @@ int main() {
     depthShader.use();
     depthShader.setMatrix4("lightView", lview);
     depthShader.setMatrix4("lightProj", lprojection);
-    depthShader.setVector3("lightCol", lightCol);
     depthShader.setVector3("lightPos", lightPos);
     depthShader.setVector3("lightDiff", 1.0, 1.0, 1.0);
     depthShader.setVector2("rsmResolution", glm::vec2(512.0f, 512.0f));
@@ -445,7 +446,6 @@ int main() {
     screenShader.setInt("lowresMap", 7);
     screenShader.setInt("coverMap", 8);
     screenShader.setVector3("light.position", lightPos);
-    screenShader.setVector3("light.color", lightCol);
     screenShader.setMatrix4("lightView", lview);
     screenShader.setMatrix4("lightProj", lprojection);
     lowresShader.use();
@@ -499,9 +499,12 @@ int main() {
         ImGui::Begin("Factors Controls");
         ImGui::Checkbox("direct", &directFactor);
         ImGui::SliderFloat("indirect", &indirectFactor, 0.0f, 10.0f);
-        ImGui::Checkbox("Color as Flux", &Mode1);
-        ImGui::Checkbox("attenuation & reciever cos", &Mode2);
+        ImGui::SliderInt("Sample number", &sampleNum, 50, 1000);
+        ImGui::SliderFloat3("Light Color", &lightCol[0], 0.0f, 4.0f);
+        ImGui::Checkbox("Color as intensity", &Mode1);
+        ImGui::Checkbox("reciever cosine", &Mode2);
         ImGui::Checkbox("indirect diffuse", &Mode3);
+        ImGui::Checkbox("fixed (dist^4)", &Mode4);
         ImGui::End();
 
         ImGui::Render();
@@ -522,6 +525,7 @@ int main() {
         depthShader.use();
         depthShader.setInt("Mode1", Mode1);
         depthShader.setInt("Mode2", Mode2);
+        depthShader.setVector3("lightCol", lightCol);
         depthShader.setInt("Reverse", 0);
         depthShader.setInt("useTex", 1);
         drawGuitar(depthShader, SGB);
@@ -586,6 +590,8 @@ int main() {
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, lFlux);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
+        lowresShader.setInt("Mode4", Mode4);
+        lowresShader.setInt("sampleNum", sampleNum);
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -614,11 +620,14 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, lowresBuffer);
         glActiveTexture(GL_TEXTURE8);
         glBindTexture(GL_TEXTURE_2D, cDepth);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
         screenShader.setVector3("viewPos", camPos);
+        screenShader.setVector3("light.color", lightCol);
         screenShader.setInt("Mode3", Mode3);
+        screenShader.setInt("Mode4", Mode4);
+        screenShader.setInt("sampleNum", sampleNum);
         screenShader.setFloat("directFactor", (float)directFactor);
         screenShader.setFloat("indirectFactor", indirectFactor);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -639,6 +648,7 @@ int main() {
         lampShader.setMatrix4("Model", model);
         lampShader.setMatrix4("View", view);
         lampShader.setMatrix4("Proj", projection);
+        lampShader.setVector3("lightCol", lightCol / 3.0f);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 

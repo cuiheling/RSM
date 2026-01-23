@@ -42,10 +42,10 @@ void main() {
     vec3 lightDir = normalize(lightPos - FragPos.xyz);
     vec3 intensity;
     if (Mode1 == 1){
-        intensity = lightCol / (4.0 * 3.14159);
+        intensity = lightCol;
     }
     else{
-        intensity = lightCol;
+        intensity = lightCol / (4.0 * 3.14159);
     }
     if (Mode2 == 1){
         vec3 inFlux = intensity * deltaOmega * attenuate(lightDistance);

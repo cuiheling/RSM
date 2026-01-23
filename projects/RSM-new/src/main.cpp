@@ -19,7 +19,9 @@ using namespace std;
 Camera camera;
 double deltaTime = 0.0f, lastTime = 0.0f;
 float indirectFactor = 3.0;
-bool Mode1 = 1, Mode2 = 0, Mode3 = 1, directFactor = 1, ctrl = 1; 
+glm::vec3 lightCol(2.0f, 2.0f, 2.0f);
+bool Mode1 = 1, Mode2 = 1, Mode3 = 1, Mode4 = 1, directFactor = 1, ctrl = 1; 
+int sampleNum = 400;
 static GLFWcursorposfun imgui_cursor_callback = nullptr;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -262,8 +264,8 @@ int main() {
     std::mt19937 gen(12345);
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     const float pai = 3.1415926;
-    float samples[1205];
-    for (int i = 0; i < 400; i++){
+    float samples[3005];
+    for (int i = 0; i < 1000; i++){
         float s1 = dist(gen), s2 = dist(gen);
         //float s1 = (float)(i / 20 + 1) / 20.0;
         //float s2 = (float)(i % 20 + 1) / 20.0;
@@ -441,7 +443,7 @@ int main() {
     GLuint sampleSSBO;
     glGenBuffers(1, &sampleSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sampleSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * 400, samples, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec3) * 1000, samples, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
 
     Shader depthShader("depth.vs", "depth.gs", "depth.fs");
@@ -451,7 +453,7 @@ int main() {
     Shader lowresShader("lowres.vs", "lowres.fs");
     Shader lampShader("lamp.vs", "lamp.fs");
 
-    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f), lightCol(2.0f, 2.0f, 2.0f);
+    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
     glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.2f, 20.0f);
     //glm::mat4 lprojection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.50f);
     std::vector<glm::mat4> lviews;
@@ -471,7 +473,6 @@ int main() {
     depthShader.setMatrix4("lightProj", lprojection);
     depthShader.setVector2("rsmResolution", glm::vec2(512.0f, 512.0f));
     depthShader.setFloat("far_plane", 20.0f);
-    depthShader.setVector3("lightCol", lightCol);
     depthShader.setVector3("lightPos", lightPos);
     depthShader.setVector3("lightDiff", 1.0f, 1.0f, 1.0f);
     depthShader.setInt("albedoMap", 0);
@@ -494,7 +495,6 @@ int main() {
     screenShader.setInt("lowresMap", 7);
     screenShader.setInt("coverMap", 8);
     screenShader.setVector3("light.position", lightPos);
-    screenShader.setVector3("light.color", lightCol);
     lowresShader.use();
     lowresShader.setVector3("lightPos", lightPos);
     lowresShader.setInt("cbuffer.cPosition", 0);
@@ -544,9 +544,12 @@ int main() {
         ImGui::Begin("Factors Controls");
         ImGui::Checkbox("direct", &directFactor);
         ImGui::SliderFloat("indirect", &indirectFactor, 0.0f, 10.0f);
-        ImGui::Checkbox("Color as Flux", &Mode1);
+        ImGui::SliderInt("Sample number", &sampleNum, 50, 1000);
+        ImGui::SliderFloat3("Light Color", &lightCol[0], 0.0f, 4.0f);
+        ImGui::Checkbox("Color as Intensity", &Mode1);
         ImGui::Checkbox("attenuation & reciever cos", &Mode2);
         ImGui::Checkbox("indirect diffuse", &Mode3);
+        ImGui::Checkbox("fixed (dist^4)", &Mode4);
         ImGui::End();
 
         ImGui::Render();
@@ -567,6 +570,7 @@ int main() {
         depthShader.use();
         depthShader.setInt("Mode1", Mode1);
         depthShader.setInt("Mode2", Mode2);
+        depthShader.setVector3("lightCol", lightCol);
         depthShader.setInt("Reverse", 0);
         depthShader.setInt("useTex", 1);
         drawGuitar(depthShader, SGB);
@@ -639,6 +643,8 @@ int main() {
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_CUBE_MAP, lFlux);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
+        lowresShader.setInt("Mode4", Mode4);
+        lowresShader.setInt("sampleNum", sampleNum);
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -669,11 +675,14 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, lowresBuffer);
         glActiveTexture(GL_TEXTURE8);
         glBindTexture(GL_TEXTURE_2D, cDepth);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
         screenShader.setVector3("viewPos", camPos);
+        screenShader.setVector3("light.color", lightCol);
         screenShader.setInt("Mode3", Mode3);
+        screenShader.setInt("Mode4", Mode4);
+        screenShader.setInt("sampleNum", sampleNum);
         screenShader.setFloat("directFactor", (float)directFactor);
         screenShader.setFloat("indirectFactor", indirectFactor);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -694,6 +703,7 @@ int main() {
         lampShader.setMatrix4("Model", model);
         lampShader.setMatrix4("View", view);
         lampShader.setMatrix4("Proj", projection);
+        lampShader.setVector3("lightCol", lightCol / 3.0f);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 

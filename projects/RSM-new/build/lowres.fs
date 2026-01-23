@@ -18,6 +18,8 @@ layout(std430, binding = 0) buffer SampleBuffer {
 uniform Cbuffer cbuffer;
 uniform Lbuffer lbuffer;
 uniform vec3 lightPos;
+uniform int Mode4;
+uniform int sampleNum;
 
 out vec4 FragColor;
 in vec2 TexCoords;
@@ -36,7 +38,7 @@ void main(){
     vec3 b = cross(d, t);
     vec3 irradiance = vec3(0.0);
     float total_weight = 0.0;
-    for (int i = 0; i < 300; i++){
+    for (int i = 0; i < sampleNum; i++){
         vec3 xywt = samples[i];
         vec3 sampleCoords = xywt.x * t + xywt.y * b + d;
         float weight = xywt.z;
@@ -47,7 +49,12 @@ void main(){
         float tmp = max(0, dot(pNormal, FragPos - pFragPos)) * max(0, dot(Normal, pFragPos - FragPos));
         
         float dist = length(pFragPos - FragPos);
-        irradiance += weight * pFlux * tmp * attenuate(dist) / (dist * dist);
+        if (Mode4 == 1){
+            irradiance += weight * pFlux * tmp / pow(dist, 4.0);
+        }
+        else{
+            irradiance += weight * pFlux * tmp * attenuate(dist) / (dist * dist);
+        }
     }
     if (total_weight < 0.001){
         FragColor = vec4(0.0, 0.0, 0.0, 1.0);

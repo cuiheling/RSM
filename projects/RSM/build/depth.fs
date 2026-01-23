@@ -39,10 +39,10 @@ void main() {
     }
     vec3 intensity;
     if (Mode1 == 1){
-        intensity = lightCol / (2.0 * 3.14159 / 3.0);
+        intensity = lightCol;
     }
     else{
-        intensity = lightCol;
+        intensity = lightCol / (2.0 * 3.14159 / 3.0);
     }
     if (Mode2 == 1){
         float dist = length(lightPos - FragPos);

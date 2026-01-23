@@ -30,10 +30,10 @@ void main() {
     }
     vec3 intensity;
     if (Mode1 == 1){
-        intensity = lightCol / (lightOrthoHeight * lightOrthoWidth);
+        intensity = lightCol;
     }
     else{
-        intensity = lightCol;
+        intensity = lightCol / (lightOrthoHeight * lightOrthoWidth);
     }
     vec3 inFlux = intensity * deltaA;
     if (Mode2 == 1){
