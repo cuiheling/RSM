@@ -1,3 +1,0 @@
-D:/LearnOpenGL/projects/RSM/build/CMakeFiles/OpenGLDemo.dir
-D:/LearnOpenGL/projects/RSM/build/CMakeFiles/edit_cache.dir
-D:/LearnOpenGL/projects/RSM/build/CMakeFiles/rebuild_cache.dir
