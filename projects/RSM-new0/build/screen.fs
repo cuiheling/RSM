@@ -22,14 +22,21 @@ struct Light{
 
 uniform sampler2D lowresMap;
 uniform samplerCube shadowMap;
+uniform sampler2D coverMap;
 uniform Light light;
 uniform Cbuffer cbuffer;
 uniform Lbuffer lbuffer;
 uniform vec3 viewPos;
 uniform float shininess;
 uniform float far_plane;
+uniform float directFactor;
+uniform float indirectFactor;
 uniform mat4 lightProj;
 uniform mat4 lightViews[6];
+uniform int Mode3;
+uniform int Mode4;
+uniform int Mode5;
+uniform int sampleNum;
 
 layout(std430, binding = 0) buffer SampleBuffer {
     vec4 samples[];
@@ -51,35 +58,55 @@ int similar(vec2 xCoords, vec2 xpCoords){
     }
 }
 
+float attenuate(float d){
+    return 1.0 / (1.0 + 0.09 * d + 0.032 * d * d);
+}
+
 vec3 sampleRSM(){
     vec3 FragPos = texture(cbuffer.cPosition, TexCoords).rgb;
     vec3 Normal = texture(cbuffer.cNormal, TexCoords).rgb;
     vec3 fragToLight = FragPos - light.position;
-    vec3 d = normalize(fragToLight);
     vec3 irradiance = vec3(0.0);
-    float total_weight = 0.0;
-    for (int i = 0; i < 400; i++){
+    float total_weight = 0.0, total_count = 0.0;
+    for (int i = 0; i < sampleNum; i++){
         vec4 xyzw = samples[i];
-        vec3 sampleCoords = xyzw.xyz + d;
+        vec3 sampleCoords = xyzw.xyz + normalize(fragToLight);
         float weight = xyzw.w;
         total_weight += weight;
+        total_count += 1.0;
         vec3 pFragPos = texture(lbuffer.lPosition, sampleCoords).rgb;
         vec3 pNormal = texture(lbuffer.lNormal, sampleCoords).rgb;
         vec3 pFlux = texture(lbuffer.lFlux, sampleCoords).rgb;
         float tmp = max(0, dot(pNormal, FragPos - pFragPos)) * max(0, dot(Normal, pFragPos - FragPos));
-        irradiance += weight * pFlux * tmp / pow(length(FragPos - pFragPos), 4.0);
+
+        float dist = length(pFragPos - FragPos);
+        if (Mode4 == 1){
+            irradiance += weight * pFlux * tmp / pow(dist, 4.0);
+        }
+        else{
+            irradiance += weight * pFlux * tmp * attenuate(dist) / (dist * dist);
+        }
     }
     if (total_weight < 0.001){
         return vec3(0.0, 0.0, 0.0);
     }
     else{
-        irradiance /= total_weight;
+        if (Mode5 == 1){
+            irradiance /= total_weight;
+        }
+        else{
+            irradiance /= total_count;
+        }
         return vec3(irradiance * (512 * 512 * 6));
     }
     //return texture(lbuffer.lNormal, fragToLight).rgb;
 }
 
 void main(){
+    if (texture(coverMap, TexCoords).r >= 1.0){
+        FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
     vec3 FragPos = texture(cbuffer.cPosition, TexCoords).rgb;
     vec3 Normal = texture(cbuffer.cNormal, TexCoords).rgb;
     vec3 Diffuse = texture(cbuffer.cAlbedoSpec, TexCoords).rgb;
@@ -117,7 +144,9 @@ void main(){
         shadow += (currentDepth -  bias > closestDepth ? 1.0 : 0.0);
     }
     shadow /= float(samples);
-    vec3 direct = ambient + (diffuse + specular) * (1.0 - shadow);
+
+    float dist = length(light.position - FragPos);
+    vec3 directLight = (ambient + (diffuse + specular) * (1.0 - shadow)) * attenuate(dist);
 
     vec3 indirect;
     vec2 lowresTSize = 1.0 / textureSize(lowresMap, 0);
@@ -139,7 +168,7 @@ void main(){
     else if (uu < 0.00001) {
         if (similar(TexCoords.xy, lowres00) == 0 || similar(TexCoords.xy, lowres01) == 0){
             indirect = sampleRSM();
-            //indirect = vec3(1.0) - direct;
+            //indirect = vec3(1.0) - directLight;
         }
         else{
             indirect = vv * F01 + (1 - vv) * F00;
@@ -148,7 +177,7 @@ void main(){
     else if (vv < 0.00001) {
         if (similar(TexCoords.xy, lowres00) == 0 || similar(TexCoords.xy, lowres10) == 0){
             indirect = sampleRSM();
-            //indirect = vec3(1.0) - direct;
+            //indirect = vec3(1.0) - directLight;
         }
         else{
             indirect = uu * F10 + (1 - uu) * F00;
@@ -159,12 +188,18 @@ void main(){
         count += similar(TexCoords.xy, lowres10) + similar(TexCoords.xy, lowres11);
         if (count < 3){
             indirect = sampleRSM();
-            //indirect = vec3(1.0) - direct;
+            //indirect = vec3(1.0) - directLight;
         }
         else{
             indirect = uu * vv * F11 + (1-uu) * vv * F01 + uu * (1-vv) * F10 + (1-uu) * (1-vv) * F00;
         }
     }
-    //vec3 fragColor = pow(lighting, vec3(1.0/2.2));
-    FragColor = vec4(direct + indirect, 1.0);
+    vec3 indirectLight;
+    if (Mode3 == 1){
+        indirectLight = indirect * Diffuse;
+    }
+    else{
+        indirectLight = indirect;
+    }
+    FragColor = vec4(directLight * directFactor + indirectLight * indirectFactor, 1.0);
 }

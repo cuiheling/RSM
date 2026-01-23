@@ -20,6 +20,7 @@ uniform Lbuffer lbuffer;
 uniform mat4 lightProj;
 uniform mat4 lightView;
 uniform int Mode4;
+uniform int Mode5;
 uniform int sampleNum;
 
 out vec4 FragColor;
@@ -37,7 +38,7 @@ void main(){
     projCoords = projCoords * 0.5 + 0.5;
 
     vec3 irradiance = vec3(0.0);
-    float total_weight = 0.0;
+    float total_weight = 0.0, total_count = 0.0;
     for (int i = 0; i < sampleNum; i++){
         vec3 xywt = samples[i];
         vec2 sampleCoords = xywt.xy + projCoords.xy;
@@ -46,6 +47,7 @@ void main(){
         }
         float weight = xywt.z;
         total_weight += weight;
+        total_count += 1.0;
         vec3 pFragPos = texture(lbuffer.lPosition, sampleCoords).rgb;
         vec3 pNormal = texture(lbuffer.lNormal, sampleCoords).rgb;
         vec3 pFlux = texture(lbuffer.lFlux, sampleCoords).rgb;
@@ -62,7 +64,12 @@ void main(){
         FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     }
     else{
-        irradiance /= total_weight;
+        if (Mode5 == 1){
+            irradiance /= total_weight;
+        }
+        else{
+            irradiance /= total_count;
+        }
         FragColor = vec4(irradiance * (512 * 512), 1.0);
     }
 }

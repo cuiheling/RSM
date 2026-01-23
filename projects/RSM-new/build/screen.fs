@@ -29,12 +29,13 @@ uniform Lbuffer lbuffer;
 uniform vec3 viewPos;
 uniform float shininess;
 uniform float far_plane;
-uniform int Mode3;
 uniform float directFactor;
 uniform float indirectFactor;
 uniform mat4 lightProj;
 uniform mat4 lightViews[6];
+uniform int Mode3;
 uniform int Mode4;
+uniform int Mode5;
 uniform int sampleNum;
 
 layout(std430, binding = 0) buffer SampleBuffer {
@@ -70,12 +71,13 @@ vec3 sampleRSM(){
     vec3 t = normalize(cross(up, d));
     vec3 b = cross(d, t);
     vec3 irradiance = vec3(0.0);
-    float total_weight = 0.0;
+    float total_weight = 0.0, total_count = 0.0;
     for (int i = 0; i < sampleNum; i++){
         vec3 xywt = samples[i];
         vec3 sampleCoords = xywt.x * t + xywt.y * b + d;
         float weight = xywt.z;
         total_weight += weight;
+        total_count += 1.0;
         vec3 pFragPos = texture(lbuffer.lPosition, sampleCoords).rgb;
         vec3 pNormal = texture(lbuffer.lNormal, sampleCoords).rgb;
         vec3 pFlux = texture(lbuffer.lFlux, sampleCoords).rgb;
@@ -93,7 +95,12 @@ vec3 sampleRSM(){
         return vec3(0.0, 0.0, 0.0);
     }
     else{
-        irradiance /= total_weight;
+        if (Mode5 == 1){
+            irradiance /= total_weight;
+        }
+        else{
+            irradiance /= total_count;
+        }
         return vec3(irradiance * (512 * 512 * 6));
     }
     //return texture(lbuffer.lNormal, fragToLight).rgb;

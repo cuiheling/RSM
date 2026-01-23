@@ -20,7 +20,7 @@ Camera camera;
 double deltaTime = 0.0f, lastTime = 0.0f;
 float indirectFactor = 3.0;
 glm::vec3 lightCol(2.0f, 2.0f, 2.0f);
-bool Mode1 = 1, Mode2 = 1, Mode3 = 1, Mode4 = 1, directFactor = 1, ctrl = 1;
+bool Mode1 = 1, Mode2 = 1, Mode3 = 1, Mode4 = 1, Mode5 = 1, directFactor = 1, ctrl = 1;
 int sampleNum = 400;
 static GLFWcursorposfun imgui_cursor_callback = nullptr;
 
@@ -505,6 +505,7 @@ int main() {
         ImGui::Checkbox("attenuation & reciever cos", &Mode2);
         ImGui::Checkbox("indirect diffuse", &Mode3);
         ImGui::Checkbox("fixed (dist^4)", &Mode4);
+        ImGui::Checkbox("Norm by total_weight", &Mode5);
         ImGui::End();
 
         ImGui::Render();
@@ -591,6 +592,7 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, lFlux);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
         lowresShader.setInt("Mode4", Mode4);
+        lowresShader.setInt("Mode5", Mode5);
         lowresShader.setInt("sampleNum", sampleNum);
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -625,6 +627,7 @@ int main() {
         screenShader.setVector3("light.color", lightCol);
         screenShader.setInt("Mode3", Mode3);
         screenShader.setInt("Mode4", Mode4);
+        screenShader.setInt("Mode5", Mode5);
         screenShader.setInt("sampleNum", sampleNum);
         screenShader.setFloat("directFactor", (float)directFactor);
         screenShader.setFloat("indirectFactor", indirectFactor);

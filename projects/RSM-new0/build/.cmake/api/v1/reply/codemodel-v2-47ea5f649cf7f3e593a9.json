@@ -15,7 +15,8 @@
 					"source" : ".",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
@@ -30,7 +31,8 @@
 					"name" : "OpenGLDemo",
 					"targetIndexes" : 
 					[
-						0
+						0,
+						1
 					]
 				}
 			],
@@ -39,8 +41,15 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "OpenGLDemo::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-OpenGLDemo-Debug-e14a3ae049e5337c0ad8.json",
+					"jsonFile" : "target-OpenGLDemo-Debug-c13d4db57b983e9c5277.json",
 					"name" : "OpenGLDemo",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "imgui::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-imgui-Debug-d4918ac55ec0d1b2b1a9.json",
+					"name" : "imgui",
 					"projectIndex" : 0
 				}
 			]

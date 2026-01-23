@@ -7,6 +7,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 #include <cmath>
 #include <random>
 #include <iostream>
@@ -15,6 +18,11 @@ using namespace std;
 
 Camera camera;
 double deltaTime = 0.0f, lastTime = 0.0f;
+float indirectFactor = 3.0;
+glm::vec3 lightCol(2.0f, 2.0f, 2.0f);
+bool Mode1 = 1, Mode2 = 1, Mode3 = 1, Mode4 = 1, Mode5 = 1, directFactor = 1, ctrl = 1; 
+int sampleNum = 400;
+static GLFWcursorposfun imgui_cursor_callback = nullptr;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -40,10 +48,54 @@ void processInput(GLFWwindow* window) {
         camera.KeyboardRotate(-4.0f, 0.0f);
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
         camera.KeyboardRotate(4.0f, 0.0f);
+    /*if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        indirectFactor = max(indirectFactor - 0.1, 0.0);
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        indirectFactor = min(indirectFactor + 0.1, 10.0);*/
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+    if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+        ctrl = !ctrl;
+        if (ctrl) {
+            //imgui open
+            camera.firstMouse = true;
+        }
+    }
+    /*if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+        directFactor = 1.0 - directFactor;
+    if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+        Mode1 = 1 - Mode1;
+    if (key == GLFW_KEY_E && action == GLFW_PRESS)
+        Mode2 = 1 - Mode2;
+    if (key == GLFW_KEY_R && action == GLFW_PRESS)
+        Mode3 = 1 - Mode3;
+    if (key == GLFW_KEY_ENTER && action == GLFW_PRESS){
+        cout<<"direct="<<directFactor <<"  indirect="<<indirectFactor;
+        if (Mode1 == 1){
+            cout<<"  lightCol=Flux  ";
+        }
+        else{
+            cout<<"  lightCol=Intensity  ";
+        }
+        if (Mode2 == 1){
+            cout<<"  +attenuate +recieve_cosine";
+        }
+        if (Mode3 == 1){
+            cout<<" +count_Diffuse";
+        }
+        cout<<endl;
+    }*/
+}
+
+
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-    camera.MouseRotate((float)xpos, (float)ypos);
+    if (imgui_cursor_callback)
+        imgui_cursor_callback(window, xpos, ypos);
+    if (!ImGui::GetIO().WantCaptureMouse && !ctrl)
+        camera.MouseRotate((float)xpos, (float)ypos);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
@@ -138,6 +190,19 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    ImGui::StyleColorsDark();
+    bool backend_ok = ImGui_ImplGlfw_InitForOpenGL(window, true);
+    bool renderer_ok = ImGui_ImplOpenGL3_Init("#version 130");
+
+    if (!backend_ok || !renderer_ok) {
+        std::cerr << "Failed to initialize ImGui backends!" << std::endl;
+    }
+
     stbi_set_flip_vertically_on_load(true);
     Model SGB("backpack/backpack.obj");
 
@@ -199,23 +264,15 @@ int main() {
     std::mt19937 gen(12345);
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     const float pai = 3.1415926;
-    //float sampleX[405], sampleY[405], sampleWt[405];
-    float samples[1605];
-    for (int i = 0; i < 400; i++){
+    float samples[4005];
+    for (int i = 0; i < 1000; i++){
         float s1 = dist(gen), s2 = dist(gen), s3 = dist(gen);
         float th1 = 2 * pai * s2, th2 =  acos(1.0f - 2.0f * s3);
-        samples[i * 4] = s1 * cos(th2);
-        samples[i * 4 + 1] = s1 * sin(th2) * sin(th1);
-        samples[i * 4 + 2] = s1 * sin(th2) * cos(th1);
+        samples[i * 4] = 0.3 * s1 * cos(th2);
+        samples[i * 4 + 1] = 0.3 * s1 * sin(th2) * sin(th1);
+        samples[i * 4 + 2] = 0.3 * s1 * sin(th2) * cos(th1);
         samples[i * 4 + 3] = s1 * s1;
     }
-    /*float samples[1205];
-    for (int i = 0; i < 400; i++){
-        float s1 = dist(gen), s2 = dist(gen);
-        samples[i * 3] = 0.3 * s1 * sin(s2 * 2 * pai);
-        samples[i * 3 + 1] = 0.3 * s1 * cos(s2 * 2 * pai);
-        samples[i * 3 + 2] = s1 * s1;
-    }*/
 
     unsigned int lBuffer;
     glGenFramebuffers(1, &lBuffer);
@@ -288,6 +345,18 @@ int main() {
     unsigned int cBuffer;
     glGenFramebuffers(1, &cBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, cBuffer);
+
+    unsigned int cDepth;
+    glGenTextures(1, &cDepth);
+    glBindTexture(GL_TEXTURE_2D, cDepth);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 512, 512, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, cDepth, 0);
     unsigned int cPosition;
     glGenTextures(1, &cPosition);
     glBindTexture(GL_TEXTURE_2D, cPosition);
@@ -312,12 +381,6 @@ int main() {
 
     GLuint Cattachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
     glDrawBuffers(3, Cattachments);
-
-    unsigned int depthRBO;
-    glGenRenderbuffers(1, &depthRBO);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 512, 512);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRBO);
 
     glBindFramebuffer(GL_FRAMEBUFFER, cBuffer);
     GLenum Cstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -380,7 +443,7 @@ int main() {
     GLuint sampleSSBO;
     glGenBuffers(1, &sampleSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, sampleSSBO);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * 400, samples, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4) * 1000, samples, GL_STATIC_DRAW);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
 
     Shader depthShader("depth.vs", "depth.gs", "depth.fs");
@@ -390,8 +453,8 @@ int main() {
     Shader lowresShader("lowres.vs", "lowres.fs");
     Shader lampShader("lamp.vs", "lamp.fs");
 
-    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f), lightCol(1.0f, 1.0f, 1.0f);
-    glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 20.0f);
+    glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
+    glm::mat4 lprojection = glm::perspective(glm::radians(90.0f), 1.0f, 0.2f, 20.0f);
     //glm::mat4 lprojection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.50f);
     std::vector<glm::mat4> lviews;
     lviews.push_back(glm::lookAt(lightPos, lightPos + glm::vec3(1.0,0.0,0.0), glm::vec3(0.0,-1.0,0.0)));
@@ -404,16 +467,13 @@ int main() {
     for (GLuint i = 0; i < 6; i++) {
         char str[20] = "lightViews[i]";
         str[11] = i + '0';
-        printf("%s\n", str);
         depthShader.setMatrix4(str, lviews[i]);
     }
     depthShader.setMatrix4("lightProj", lprojection);
     depthShader.setVector2("rsmResolution", glm::vec2(512.0f, 512.0f));
-    depthShader.setFloat("fovX", 90.0f);
-    depthShader.setFloat("fovY", 90.0f);
     depthShader.setFloat("far_plane", 20.0f);
-    depthShader.setVector3("lightCol", lightCol);
     depthShader.setVector3("lightPos", lightPos);
+    depthShader.setVector3("lightDiff", 1.0f, 1.0f, 1.0f);
     depthShader.setInt("albedoMap", 0);
     bufferShader.use();
     bufferShader.setInt("material.texture_diffuse1", 0);
@@ -432,8 +492,8 @@ int main() {
     screenShader.setInt("lbuffer.lNormal", 5);
     screenShader.setInt("lbuffer.lFlux", 6);
     screenShader.setInt("lowresMap", 7);
+    screenShader.setInt("coverMap", 8);
     screenShader.setVector3("light.position", lightPos);
-    screenShader.setVector3("light.color", lightCol);
     lowresShader.use();
     lowresShader.setVector3("lightPos", lightPos);
     lowresShader.setInt("cbuffer.cPosition", 0);
@@ -444,6 +504,7 @@ int main() {
     debugShader.use();
     debugShader.setInt("depthMap", 0);
     debugShader.setInt("normMap", 1);
+    debugShader.setInt("fluxMap", 2);
 
     unsigned int diffuseTex = LoadTexture("metal.png");
     unsigned int specularTex = LoadTexture("newspec.png");
@@ -451,15 +512,47 @@ int main() {
     glViewport(0, 0, 512, 512);
     //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetKeyCallback(window, key_callback);
+    imgui_cursor_callback = glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
+        glfwPollEvents();
+
+        if (ctrl == 1) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        else {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
 
         double currentTime = (double)glfwGetTime();
         deltaTime = currentTime - lastTime;
         lastTime = currentTime;
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        static bool show_demo_window = true;
+        if (show_demo_window) {
+            ImGui::ShowDemoWindow(&show_demo_window);
+            ImGui::SetWindowPos(ImVec2(50, 50));
+        }
+
+        ImGui::Begin("Factors Controls");
+        ImGui::Checkbox("direct", &directFactor);
+        ImGui::SliderFloat("indirect", &indirectFactor, 0.0f, 10.0f);
+        ImGui::SliderInt("Sample number", &sampleNum, 50, 1000);
+        ImGui::SliderFloat3("Light Color", &lightCol[0], 0.0f, 4.0f);
+        ImGui::Checkbox("Color as Intensity", &Mode1);
+        ImGui::Checkbox("attenuation & reciever cos", &Mode2);
+        ImGui::Checkbox("indirect diffuse", &Mode3);
+        ImGui::Checkbox("fixed (dist^4)", &Mode4);
+        ImGui::Checkbox("Norm by total_weight", &Mode5);
+        ImGui::End();
+
+        ImGui::Render();
 
         glm::vec3 camPos = camera.cameraPos;
         glm::mat4 model = glm::mat4(1.0f);
@@ -475,10 +568,12 @@ int main() {
         glDepthFunc(GL_LESS);
         glDepthMask(GL_TRUE);
         depthShader.use();
+        depthShader.setInt("Mode1", Mode1);
+        depthShader.setInt("Mode2", Mode2);
+        depthShader.setVector3("lightCol", lightCol);
         depthShader.setInt("Reverse", 0);
         depthShader.setInt("useTex", 1);
         drawGuitar(depthShader, SGB);
-        depthShader.use();
         depthShader.setInt("Reverse", 1);
         depthShader.setInt("useTex", 0);
         glActiveTexture(GL_TEXTURE0);
@@ -523,6 +618,8 @@ int main() {
         glBindTexture(GL_TEXTURE_CUBE_MAP, lDepth);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_CUBE_MAP, lNormal);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, lFlux);
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);*/
@@ -546,6 +643,9 @@ int main() {
         glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_CUBE_MAP, lFlux);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
+        lowresShader.setInt("Mode4", Mode4);
+        lowresShader.setInt("Mode5", Mode5);
+        lowresShader.setInt("sampleNum", sampleNum);
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -574,8 +674,17 @@ int main() {
         glBindTexture(GL_TEXTURE_CUBE_MAP, lFlux);
         glActiveTexture(GL_TEXTURE7);
         glBindTexture(GL_TEXTURE_2D, lowresBuffer);
-        screenShader.setVector3("viewPos", camPos);
+        glActiveTexture(GL_TEXTURE8);
+        glBindTexture(GL_TEXTURE_2D, cDepth);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, sampleSSBO);
+        screenShader.setVector3("viewPos", camPos);
+        screenShader.setVector3("light.color", lightCol);
+        screenShader.setInt("Mode3", Mode3);
+        screenShader.setInt("Mode4", Mode4);
+        screenShader.setInt("Mode5", Mode5);
+        screenShader.setInt("sampleNum", sampleNum);
+        screenShader.setFloat("directFactor", (float)directFactor);
+        screenShader.setFloat("indirectFactor", indirectFactor);
         glBindVertexArray(screenVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
         glBindVertexArray(0);
@@ -596,12 +705,16 @@ int main() {
         lampShader.setMatrix4("Model", model);
         lampShader.setMatrix4("View", view);
         lampShader.setMatrix4("Proj", projection);
+        lampShader.setVector3("lightCol", lightCol / 3.0f);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         glBindVertexArray(0);
 
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     glfwTerminate();
     return 0;
 }
